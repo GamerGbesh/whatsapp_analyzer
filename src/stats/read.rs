@@ -1,6 +1,5 @@
 use chrono::NaiveDate;
 use std::collections::HashMap;
-use regex::Regex;
 use std::io::{Read, Seek};
 use zip::ZipArchive;
 
@@ -43,19 +42,15 @@ pub fn get_chat_content_from_reader<R: Read + Seek>(reader: R) -> AppResult<Stri
 
 
 pub fn get_chat_name_and_content<'a>(line: &'a str) -> Option<(&'a str, &'a str, NaiveDate)> {
-    let re = Regex::new(r"(?m)^(?<date>\d{2}/\d{2}/\d{4}), \d{2}:\d{2} - (?P<name>[^:]+): (?P<content>.*)").unwrap();
-    
-    if let Some(caps) = re.captures(line) {
-        let name = caps.name("name")?.as_str();
-        let content = caps.name("content")?.as_str();
-        let date = caps.name("date")
-                       .and_then(|m| NaiveDate::parse_from_str(m.as_str(), "%d/%m/%Y").ok())
-                       .unwrap_or_else(|| NaiveDate::default());
+    // Expected format: "dd/mm/yyyy, HH:MM - Name: Message"
+    let (date_time_part, rest) = line.split_once(" - ")?;
+    let (name, content) = rest.split_once(": ")?;
+    let (date_str, _) = date_time_part.split_once(',')?;
 
-        Some((name, content, date))
-    } else {
-        None
-    }
+    let date = NaiveDate::parse_from_str(date_str.trim(), "%d/%m/%Y")
+        .unwrap_or_else(|_| NaiveDate::default());
+
+    Some((name.trim(), content, date))
 }
 
 /// Iterate through the chat and create users alongside the chats that they entered into the chat
