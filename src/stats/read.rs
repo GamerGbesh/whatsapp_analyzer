@@ -1,11 +1,10 @@
 use chrono::NaiveDate;
 use std::collections::HashMap;
 use regex::Regex;
-use std::fs::File;
-use std::io::{Read, Result};
+use std::io::{Read, Seek};
 use zip::ZipArchive;
 
-use crate::models::user::User;
+use crate::{AppResult, models::{errors::MyError, user::User}};
 
 
 /// Takes a filepath to the zip file of the whatsapp chat to extract the chat content
@@ -26,11 +25,8 @@ use crate::models::user::User;
 /// - The ZIP archive cannot be read
 /// - No `.txt` file is found
 /// - Reading the file contents fails
-pub fn get_chat_content_from_zip(filename: &str) -> Result<String>{
-    
-    let file = File::open(filename)?;
-    let mut archive = ZipArchive::new(file)?;
-
+pub fn get_chat_content_from_reader<R: Read + Seek>(reader: R) -> AppResult<String>{
+    let mut archive = ZipArchive::new(reader)?;
     for i in 0..archive.len(){
         let mut file = archive.by_index(i)?;
 
@@ -42,10 +38,7 @@ pub fn get_chat_content_from_zip(filename: &str) -> Result<String>{
     };
 
     // If no .txt file found
-    Err(std::io::Error::new(
-        std::io::ErrorKind::NotFound,
-        "No .txt file found in zip",
-    ))    
+    Err(MyError::NotFound)    
 }
 
 

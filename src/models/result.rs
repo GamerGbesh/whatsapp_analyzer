@@ -1,12 +1,12 @@
 use std::{collections::HashMap, str::FromStr};
 use std::fmt::{Display, Formatter, Result};
-
+use serde::{Deserialize, Serialize};
 
 use chrono::NaiveDate;
 
 use crate::models::user::User;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserStat {
     pub user: User,
     pub messages_per_day: HashMap<NaiveDate, usize>,
@@ -19,7 +19,7 @@ pub struct UserStat {
     pub avg_message_length: f64
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct WhatsResult {
     pub most_active_user: Option<String>,
     pub user_results: Vec<UserStat>
