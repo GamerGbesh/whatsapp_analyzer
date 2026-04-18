@@ -68,6 +68,7 @@ pub fn get_chat_name_and_content<'a>(line: &'a str) -> Option<(&'a str, &'a str,
 pub fn parse_chat<'a>(chat: &'a str) -> HashMap<&'a str, User>{
     let mut names: HashMap<&str, User> = HashMap::new();
     for line in chat.lines() {
+        let line = line.trim();
         if let Some((name, content, date)) = get_chat_name_and_content(line) {
             names.entry(name)
                 .and_modify(|user| user.add_chat(content, date))
@@ -80,19 +81,92 @@ pub fn parse_chat<'a>(chat: &'a str) -> HashMap<&'a str, User>{
 }
 
 
-// pub fn write_users_to_file(users: &Vec<&User>, filename: &str) -> Result<()> {
-//     let mut file = File::create(filename)?; // Create or overwrite
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::{Cursor, Write};
+    use zip::write::FileOptions;
+    use zip::ZipWriter;
 
-//     for user in users {
-//         writeln!(file, "User: {}", user.name)?; // Write the username
+    fn create_test_zip() -> Cursor<Vec<u8>> {
+        let mut buffer = Cursor::new(Vec::new());
 
-//         for (i, chat) in user.chats.iter().enumerate() {
-//             let date = user.chats.dates.get(i).unwrap();
-//             writeln!(file, "[{}] {}", date, chat)?;
-//         }
+        {
+            let mut zip = ZipWriter::new(&mut buffer);
+            let options: FileOptions<()> = FileOptions::default()
+                .compression_method(zip::CompressionMethod::Stored);
 
-//         writeln!(file, "\n--------------------\n")?; // Separator between users
-//     }
+            zip.start_file("chat.txt", options).unwrap();
+            zip.write_all(b"Hello from chat!").unwrap();
 
-//     Ok(())
-// }
+            zip.start_file("other.bin", options).unwrap();
+            zip.write_all(b"binary stuff").unwrap();
+
+            zip.finish().unwrap();
+        }
+
+        buffer.set_position(0); // 🔥 IMPORTANT
+        buffer
+    }
+
+
+    #[test]
+    pub fn test_get_chat_content(){
+        let archive = create_test_zip();
+        let result = get_chat_content_from_reader(archive)
+            .expect("Resource not found");
+
+        assert_eq!(result, "Hello from chat!")
+    }
+
+
+    #[test]
+    pub fn test_get_name(){
+        let chat1 = "01/01/2025, 09:05 - Alice: Hey there";
+        let chat2 = "12/12/2024, 23:59 - John Doe: This is a test message";
+        let chat3 = "one:two";
+
+        assert_eq!(
+            get_chat_name_and_content(chat1), 
+            Some((
+                "Alice", 
+                "Hey there", 
+                NaiveDate::parse_from_str("01/01/2025", "%d/%m/%Y").unwrap()
+            ))
+        );
+
+        assert_eq!(
+            get_chat_name_and_content(chat2),
+            Some((
+                "John Doe", 
+                "This is a test message", 
+                NaiveDate::parse_from_str("12/12/2024", "%d/%m/%Y").unwrap()
+            ))
+        );
+
+        assert_eq!(get_chat_name_and_content(chat3), None);
+    }
+
+
+    #[test]
+    pub fn test_parse_chat(){
+        let data = r#"
+        01/01/2025, 09:05 - Alice: Hey there
+        12/12/2024, 23:59 - John Doe: Hello
+        "#;
+        
+        let result = parse_chat(data);
+        let expected : HashMap<&str, User> = [
+            ("Alice", User::new(
+                "Alice", "Hey there", NaiveDate::parse_from_str("01/01/2025", "%d/%m/%Y").unwrap())
+            ),
+            ("John Doe", User::new(
+                "John Doe", "Hello", NaiveDate::parse_from_str("12/12/2024", "%d/%m/%Y").unwrap())
+            )
+            ]
+            .into_iter()
+            .collect();
+
+        assert_eq!(result, expected);
+    }
+}

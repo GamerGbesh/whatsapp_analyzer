@@ -1,13 +1,13 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Chat {
     pub message: String,
     pub date: NaiveDate
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct User {
     pub name: String,
 
