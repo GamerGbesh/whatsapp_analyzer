@@ -19,7 +19,7 @@ impl fmt::Display for MyError {
             MyError::Io(msg) => write!(f, "input: {}", msg),
             MyError::EmtpyChat => write!(f, "The chat is empty"),
             MyError::InvalidZip(msg) => write!(f, "Zip Error: {}", msg),
-            MyError::NotFound => write!(f, "Resource not found")
+            MyError::NotFound => write!(f, "No whatsapp file found!")
         }
     }
 }
@@ -44,7 +44,7 @@ impl IntoResponse for MyError{
             MyError::EmtpyChat => (StatusCode::NO_CONTENT, "There is no chat present".to_string()),
             MyError::InvalidZip(msg) => (StatusCode::BAD_REQUEST, format!("{}", msg)),
             MyError::Io(msg) => (StatusCode::BAD_REQUEST, format!("{}", msg)),
-            MyError::NotFound => (StatusCode::NOT_FOUND, "Resource not found".to_string())
+            MyError::NotFound => (StatusCode::NOT_FOUND, "No whatsapp file found!".to_string())
         };
 
         (status, message).into_response()

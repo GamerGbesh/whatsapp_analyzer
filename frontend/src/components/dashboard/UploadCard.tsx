@@ -25,8 +25,10 @@ export function UploadCard({ onResult, onLoadDemo }: Props) {
   const handleFile = (f: File) => {
     if (f && f.name.endsWith(".zip")) {
       setFile(f);
+      setError(null);
     } else {
-      alert("Please upload a .zip file");
+      setFile(null);
+      setError("Please upload a .zip file");
     }
   };
 
@@ -49,7 +51,10 @@ export function UploadCard({ onResult, onLoadDemo }: Props) {
   };
 
   const onUpload = async () => {
-    if (!file) return alert("No file selected");
+    if (!file) {
+      setError("No file selected");
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -76,13 +81,10 @@ export function UploadCard({ onResult, onLoadDemo }: Props) {
       }
 
       onResult(data);
-
-      alert("Upload successful");
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : "Upload failed";
       setError(message);
-      alert(message);
     } finally {
       setLoading(false);
     }
@@ -93,7 +95,7 @@ export function UploadCard({ onResult, onLoadDemo }: Props) {
       onLoadDemo();
       return;
     }
-    alert("Hook your sample dataset here");
+    setError("Sample dataset is not configured");
   };
 
   return (
