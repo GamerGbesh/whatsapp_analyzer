@@ -1,5 +1,8 @@
 use core::fmt;
 use std::io;
+use axum::{
+    http::StatusCode, response::{IntoResponse, Response}
+};
 
 #[derive(Debug)]
 pub enum MyError{
@@ -32,5 +35,19 @@ impl From<io::Error> for MyError {
 impl From<zip::result::ZipError> for MyError {
     fn from(err: zip::result::ZipError) -> Self {
         MyError::InvalidZip(err)
+    }
+}
+
+impl IntoResponse for MyError{
+    fn into_response(self) -> Response {
+        let (status, message) = match self{
+            MyError::EmtpyChat => (StatusCode::NO_CONTENT, "There is no chat present".to_string()),
+            MyError::InvalidZip(msg) => (StatusCode::BAD_REQUEST, format!("{}", msg)),
+            MyError::Io(msg) => (StatusCode::BAD_REQUEST, format!("{}", msg)),
+            MyError::NotFound => (StatusCode::NOT_FOUND, "Resource not found".to_string())
+        };
+
+        (status, message).into_response()
+
     }
 }
