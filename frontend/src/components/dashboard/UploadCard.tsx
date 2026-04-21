@@ -27,6 +27,7 @@ export function UploadCard({ onResult, onLoadDemo }: Props) {
       setFile(f);
       setError(null);
     } else {
+      alert("Please upload a .zip file");
       setFile(null);
       setError("Please upload a .zip file");
     }
