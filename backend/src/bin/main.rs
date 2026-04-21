@@ -3,15 +3,23 @@ use whatsapp_analyzer::{analyze_zip_bytes, models::{errors::MyError, result::Wha
 use axum::{
     routing::post,
     Router,
-    body::Bytes,
+    extract::Multipart,
     Json
 };
 use tracing_subscriber;
 use tower_http::cors::{CorsLayer, Any};
 
-async fn process_upload(bytes: Bytes) -> Result<Json<WhatsResult>, MyError>{
-    let result = analyze_zip_bytes(&bytes)?;
-    Ok(Json(result))
+async fn process_upload(mut multipart: Multipart) -> Result<Json<WhatsResult>, MyError> {
+    while let Some(field) = multipart.next_field().await.unwrap() {
+        if let Some(_) = field.file_name() {
+            let data = field.bytes().await.unwrap();
+
+            let result = analyze_zip_bytes(&data)?;
+            return Ok(Json(result));
+        }
+    }
+
+    Err(MyError::NotFound)
 }
 
 
