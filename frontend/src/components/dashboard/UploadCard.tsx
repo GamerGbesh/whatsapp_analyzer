@@ -8,7 +8,14 @@ type Props = {
 
 export function UploadCard({ onResult, onLoadDemo }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const endpoint = "http://localhost:3000/upload";
+  const configuredApiBaseUrl = (
+    import.meta.env as Record<string, string | undefined>
+  )["VITE_API_BASE_URL"];
+  const apiBaseUrl =
+    configuredApiBaseUrl && configuredApiBaseUrl.trim().length > 0
+      ? configuredApiBaseUrl.replace(/\/$/, "")
+      : "/api";
+  const endpoint = `${apiBaseUrl}/upload`;
 
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -103,8 +110,8 @@ export function UploadCard({ onResult, onLoadDemo }: Props) {
         </p>
         <ol className="mt-2 list-decimal space-y-2 pl-5 text-xs text-gray-300">
           <li>
-            Android: open your WhatsApp chat, tap the 3 dots menu, then More
-            if that option appears, and select Export chat.
+            Android: open your WhatsApp chat, tap the 3 dots menu, then More if
+            that option appears, and select Export chat.
           </li>
           <li>
             iOS: open the chat, go to Chat Details, scroll down, and tap Export
