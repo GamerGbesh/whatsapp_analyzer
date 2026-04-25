@@ -7,7 +7,9 @@ use axum::{
     Json
 };
 use tracing_subscriber;
+use tracing_subscriber::prelude::*;
 use tower_http::cors::{CorsLayer, Any};
+use tracing::{info};
 
 async fn process_upload(mut multipart: Multipart) -> Result<Json<WhatsResult>, MyError> {
     while let Some(field) = multipart.next_field().await.unwrap() {
@@ -22,12 +24,21 @@ async fn process_upload(mut multipart: Multipart) -> Result<Json<WhatsResult>, M
     Err(MyError::NotFound)
 }
 
+fn init_tracing() {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "info".into()),
+        )
+        .with(tracing_subscriber::fmt::layer().pretty())
+        .init();
+}
+
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt()
-        .with_env_filter("info")
-        .init();
+    init_tracing();
+
     let cors = CorsLayer::new()
         .allow_origin(Any)   // 👈 allows ALL origins
         .allow_methods(Any)  // GET, POST, PUT, etc.
@@ -42,7 +53,7 @@ async fn main() {
         .await
         .unwrap();
 
-    println!("Server is running on port 3000");
+    info!("Server is running on port 3000");
 
     axum::serve(listener, app).await.unwrap();
 }
