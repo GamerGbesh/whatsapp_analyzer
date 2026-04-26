@@ -10,11 +10,19 @@ export function UploadCard({ onResult, onLoadDemo }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const configuredApiBaseUrl = (
     import.meta.env as Record<string, string | undefined>
-  )["VITE_API_BASE_URL"];
+  )["VITE_API_BASE_URL"]?.trim();
+  const localApiBaseUrl =
+    typeof window !== "undefined"
+      ? `${window.location.protocol}//${window.location.hostname}:3000`
+      : "http://backend:3000";
   const apiBaseUrl =
-    configuredApiBaseUrl && configuredApiBaseUrl.trim().length > 0
-      ? configuredApiBaseUrl.replace(/\/$/, "")
-      : "/api";
+    !configuredApiBaseUrl ||
+    configuredApiBaseUrl === "/api" ||
+    /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/i.test(
+      configuredApiBaseUrl,
+    )
+      ? localApiBaseUrl
+      : configuredApiBaseUrl.replace(/\/$/, "");
   const endpoint = `${apiBaseUrl}/upload`;
 
   const [file, setFile] = useState<File | null>(null);
